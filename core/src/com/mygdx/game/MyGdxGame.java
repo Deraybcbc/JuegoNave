@@ -26,6 +26,7 @@ public class MyGdxGame implements Screen {
 
     private Texture dropAsteroide;
     private Texture dropNave;
+    private Texture dropPoints;
 
     private Sound Soundpoints;
     private Sound Soundexplosion;
@@ -40,6 +41,9 @@ public class MyGdxGame implements Screen {
     int contador;
     int contadorVidas = 3;
 
+    private boolean isStarCollected = true; // Variable que indica si se ha recogido la estrella actual
+
+    float speedY, speedX;
 
     public MyGdxGame(Drop game) {
         this.game = game;
@@ -47,6 +51,8 @@ public class MyGdxGame implements Screen {
         //Cargar la nave y el asteroide
         dropNave = new Texture(Gdx.files.internal("nave.png"));
         dropAsteroide = new Texture(Gdx.files.internal("asteroide.png"));
+        dropPoints = new Texture(Gdx.files.internal("estrella.png"));
+
 
         //Cargar sonido del juego
         //Sonido Ambiente
@@ -66,62 +72,70 @@ public class MyGdxGame implements Screen {
 
         //Crear el rectangulo que representa el bucket
         nave = new Rectangle();
-        nave.x = 800 / 2 -  64 /2;
+        nave.x = 800 / 2 - 64 / 2;
         nave.y = 20;
         nave.width = 64;
         nave.height = 64;
 
         //Crear lluvia de asteorides en un array
         rainAsteroides = new Array<Rectangle>();
-        spawnRainAsteorides();
-
+        rainPoints = new Array<Rectangle>();
+        //spawnRainAsteorides();
+        spawnRainAsteoridesArriba();
+        spawnPoints();
     }
 
     //Funcion para hacer los asteroides
     private void spawnRainAsteorides() {
-        float asteroidSpawnX;
-        float asteroidSpawnY;
-
-        // Generar asteroides en posiciones iniciales diferentes
-        int spawnType = MathUtils.random(2); // 0: derecha, 1: izquierda, 2: abajo
-
-        switch (spawnType) {
-            case 0: // Derecha
-                asteroidSpawnX = 800; // Posición inicial a la derecha
-                asteroidSpawnY = MathUtils.random(0, 480 - 64); // Posición vertical aleatoria
-                break;
-            case 1: // Izquierda
-                asteroidSpawnX = -64; // Posición inicial a la izquierda
-                asteroidSpawnY = MathUtils.random(0, 480 - 64); // Posición vertical aleatoria
-                break;
-            case 2: // Abajo
-                asteroidSpawnX = MathUtils.random(0, 800 - 64); // Posición horizontal aleatoria
-                asteroidSpawnY = 480; // Posición inicial arriba
-                break;
-            default:
-                asteroidSpawnX = 0;
-                asteroidSpawnY = 0;
-                break;
-        }
-
+        // Generar asteroides desde la izquierda o la derecha aleatoriamente
         Rectangle rainAsteroide = new Rectangle();
-        rainAsteroide.x = asteroidSpawnX;
-        rainAsteroide.y = asteroidSpawnY;
+        if (MathUtils.randomBoolean()) {
+            rainAsteroide.x = 0;
+        } else {
+            rainAsteroide.x = 800 - 64;
+        }
+        rainAsteroide.y = MathUtils.random(0, 480 - 64);
         rainAsteroide.width = 64;
         rainAsteroide.height = 64;
+
         rainAsteroides.add(rainAsteroide);
+
+        lastDropTime = TimeUtils.nanoTime();
+    }
+
+    private void spawnRainAsteoridesArriba() {
+
+        // Generar asteroides desde arriba o abajo aleatoriamente
+        Rectangle rainAsteroide2 = new Rectangle();
+        if (MathUtils.randomBoolean()) {
+            rainAsteroide2.x = MathUtils.random(0, 800 - 64);
+            rainAsteroide2.y = 480;
+        } else {
+            rainAsteroide2.x = MathUtils.random(0, 800 - 64);
+            rainAsteroide2.y = 0 - 64;
+        }
+        rainAsteroide2.width = 64;
+        rainAsteroide2.height = 64;
+
+        rainAsteroides.add(rainAsteroide2);
         lastDropTime = TimeUtils.nanoTime();
 
     }
 
     private void spawnPoints() {
-        Rectangle rainP = new Rectangle();
-        rainP.x = MathUtils.random(0, 800 - 64);
-        rainP.y = 480;
-        rainP.width = 64;
-        rainP.height = 64;
-        rainPoints.add(rainP);
-        lastDropTime = TimeUtils.nanoTime();
+        if (isStarCollected) {
+            Rectangle rainP = new Rectangle();
+            rainP.x = MathUtils.random(0, 800 - 64);
+            rainP.y = MathUtils.random(0, 480 - 64);
+            rainP.width = 64;
+            rainP.height = 64;
+
+            rainPoints.add(rainP);
+            lastDropTime = TimeUtils.nanoTime();
+
+            // Establecer isStarCollected en false ya que acabamos de generar una nueva estrella
+            isStarCollected = false;
+        }
 
     }
 
@@ -151,11 +165,15 @@ public class MyGdxGame implements Screen {
         game.getBitmapFont().draw(game.getSpriteBatch(), "Puntos: " + contador, 0, 470);
 
         //Imprimir la nave
-        game.getSpriteBatch().draw(dropNave, nave.x, nave.y, nave.width ,nave.height);
+        game.getSpriteBatch().draw(dropNave, nave.x, nave.y, nave.width, nave.height);
 
         //Imprimir los asteroides
         for (Rectangle rain : rainAsteroides) {
             game.getSpriteBatch().draw(dropAsteroide, rain.x, rain.y, rain.width, rain.height);
+        }
+
+        for (Rectangle rainP : rainPoints) {
+            game.getSpriteBatch().draw(dropPoints, rainP.x, rainP.y, rainP.width, rainP.height);
         }
         game.getSpriteBatch().end();
 
@@ -165,53 +183,112 @@ public class MyGdxGame implements Screen {
             touchPos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
             camera.unproject(touchPos);
             nave.x = touchPos.x - 64 / 2;
+
+            // Mover la nave hacia la posición tocada en el eje X
+            nave.x = touchPos.x - 64 / 2;
+
+            // Mover la nave hacia la posición tocada en el eje Y
+            nave.y = touchPos.y - 64 / 2;
+
+            //Para que la nave no se salga de los limites
+            limitarPosicionNave();
         }
 
         //Movimiento de la nave
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             nave.x -= 200 * Gdx.graphics.getDeltaTime();
         }
-        ;
+
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             nave.x += 200 * Gdx.graphics.getDeltaTime();
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.BUTTON_A)) {
+
+        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
             nave.y += 200 * Gdx.graphics.getDeltaTime();
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.BACK)) {
+
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
             nave.y -= 200 * Gdx.graphics.getDeltaTime();
         }
 
+        //Para que la nave no se salga de los limites
+        limitarPosicionNave();
+
+
         // asegúrese de que el depósito permanezca dentro de los límites de la pantalla
         if (TimeUtils.nanoTime() - lastDropTime > 1000000000) {
-            spawnRainAsteorides();
+            //spawnRainAsteorides();
+            spawnRainAsteoridesArriba();
+            spawnPoints();
         }
+
         // mueve los asteroides, elimina las que estén debajo del borde inferior de
         // la pantalla o que golpeó el cubo. En este último caso reproducimos
         // un efecto de sonido también.
         for (Iterator<Rectangle> iter = rainAsteroides.iterator(); iter.hasNext(); ) {
             Rectangle rainAst = iter.next();
 
-            float speedX = MathUtils.random(-200, 200); // Velocidad horizontal aleatoria
-            float speedY = MathUtils.random(-200, 200); // Velocidad vertical aleatoria
 
-            rainAst.y += speedY * Gdx.graphics.getDeltaTime();
-            rainAst.x += speedX * Gdx.graphics.getDeltaTime();
-            //rainAst.x += MathUtils.random(-200, 200) * Gdx.graphics.getDeltaTime(); // Movimiento horizontal aleatorio
+            if (rainAst.x == 0) {
+                // Mover asteroides generados desde la izquierda hacia la derecha
+                rainAst.x += 200 * Gdx.graphics.getDeltaTime();
+            } else {
+                // Mover asteroides generados desde la derecha hacia la izquierda
+                rainAst.x -= 200 * Gdx.graphics.getDeltaTime();
+            }
+
+            if (rainAst.y == 0) {
+                // Mover asteroides generados desde abajo hacia arriba
+                rainAst.y += 200 * Gdx.graphics.getDeltaTime();
+            } else {
+                // Mover asteroides generados desde arriba hacia abajo
+                rainAst.y -= 200 * Gdx.graphics.getDeltaTime();
+            }
+
+//            rainAst.y += 200 * Gdx.graphics.getDeltaTime(); // Cambiado de '-200' a '200'
+
+            /*
+            rainAst.x -= MathUtils.random(0, 800 - 64) * Gdx.graphics.getDeltaTime(); // Movimiento horizontal aleatorio
+            rainAst.y -= MathUtils.random(0, 480 - 64) * Gdx.graphics.getDeltaTime();
+            rainAst.x += MathUtils.random(0, 800 - 64) * Gdx.graphics.getDeltaTime();*/
 
             if (rainAst.y + 64 < 0) {
+                rainAst.x = MathUtils.random(0, 800 - 64);
                 iter.remove();
             }
             if (rainAst.overlaps(nave)) {
                 contadorVidas--;
+                Soundexplosion.play();
                 iter.remove();
             }
         }
 
+        for (Iterator<Rectangle> iter = rainPoints.iterator(); iter.hasNext(); ) {
+            Rectangle rainP = iter.next();
+            if (rainP.y + 64 < 0) {
+                iter.remove();
+                isStarCollected = true; // Establecer isStarCollected en true cuando la estrella desaparezca
 
+            }
+            if (rainP.overlaps(nave)) {
+                contador++;
+                Soundpoints.play();
+                iter.remove();
+                isStarCollected = true; // Establecer isStarCollected en true cuando la estrella desaparezca
+
+            }
+
+        }
 
 
     }
+
+    private void limitarPosicionNave() {
+        // Asegurarse de que la nave no se salga de los límites de la pantalla
+        nave.x = MathUtils.clamp(nave.x, 0, 800 - nave.width);
+        nave.y = MathUtils.clamp(nave.y, 0, 480 - nave.height);
+    }
+
 
     @Override
     public void resize(int width, int height) {
