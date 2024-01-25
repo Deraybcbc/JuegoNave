@@ -29,7 +29,7 @@ public class MyGdxGame implements Screen {
     private Texture dropPoints;
 
     private Sound Soundpoints;
-    private Sound Soundexplosion;
+    private Sound Soundexplosion ;
     private Music musicambient;
 
     private Rectangle nave;
