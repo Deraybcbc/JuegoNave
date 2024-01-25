@@ -16,6 +16,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.TimeUtils;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 public class MyGdxGame implements Screen {
@@ -33,8 +34,8 @@ public class MyGdxGame implements Screen {
     private Music musicambient;
 
     private Rectangle nave;
-    private Array<Rectangle> rainAsteroides;
-    private Array<Rectangle> rainPoints;
+    private ArrayList<Rectangle> rainAsteroides;
+    private ArrayList<Rectangle> rainPoints;
 
     private long lastDropTime;
 
@@ -43,7 +44,7 @@ public class MyGdxGame implements Screen {
 
     private boolean isStarCollected = true; // Variable que indica si se ha recogido la estrella actual
 
-    private float spawnInterval = 1.5f; // Intervalo de tiempo entre la generación de asteroides en segundos
+    private float spawnInterval = 0.35f; // Intervalo de tiempo entre la generación de asteroides en segundos
     private float timeSinceLastSpawn = 0;
 
     float speedY, speedX;
@@ -81,8 +82,8 @@ public class MyGdxGame implements Screen {
         nave.height = 64;
 
         //Crear lluvia de asteorides en un array
-        rainAsteroides = new Array<Rectangle>();
-        rainPoints = new Array<Rectangle>();
+        rainAsteroides = new ArrayList<Rectangle>();
+        rainPoints = new ArrayList<Rectangle>();
 
         spawnRainAsteroides();
         spawnPoints();
@@ -112,20 +113,20 @@ public class MyGdxGame implements Screen {
                     break;
                 case 1: // Abajo
                     rainAsteroide.x = MathUtils.random(0, 800 - rainAsteroide.width);
-                    rainAsteroide.y = MathUtils.random(0, 480 - rainAsteroide.height);
+                    rainAsteroide.y = -rainAsteroide.height;
                     speedX = 0;
                     speedY = 200; // Velocidad hacia abajo
                     break;
                 case 2: // Derecha
-                    rainAsteroide.x = 800;
+                    rainAsteroide.x = -rainAsteroide.width;
                     rainAsteroide.y = MathUtils.random(0, 480 - rainAsteroide.height);
-                    speedX = -200; // Velocidad hacia la izquierda
+                    speedX = 200; // Velocidad hacia la derecha
                     speedY = 0;
                     break;
                 case 3: // Izquierda
-                    rainAsteroide.x = MathUtils.random(0, 800 - rainAsteroide.width);
+                    rainAsteroide.x = 800;
                     rainAsteroide.y = MathUtils.random(0, 480 - rainAsteroide.height);
-                    speedX = 200; // Velocidad hacia la derecha
+                    speedX = -200; // Velocidad hacia la izquierda
                     speedY = 0;
                     break;
             }
@@ -228,7 +229,7 @@ public class MyGdxGame implements Screen {
 
 
         // asegúrese de que el depósito permanezca dentro de los límites de la pantalla
-        if (TimeUtils.nanoTime() - lastDropTime > 10000000) {
+        if (TimeUtils.nanoTime() - lastDropTime > 1000000) {
             spawnRainAsteroides();
             spawnPoints();
         }
@@ -240,13 +241,16 @@ public class MyGdxGame implements Screen {
             Rectangle rainAst = iter.next();
 
             // Mover asteroides según la dirección desde la cual cayeron
-            rainAst.x += speedX * Gdx.graphics.getDeltaTime();
-            rainAst.y += speedY * Gdx.graphics.getDeltaTime();
+            rainAst.x += speedY * Gdx.graphics.getDeltaTime();
+            rainAst.y += speedX * Gdx.graphics.getDeltaTime();
 
             // Verificar si el asteroide ha salido completamente de la pantalla
-            if (rainAst.x + rainAst.width < 0 || rainAst.x > 800 || rainAst.y + rainAst.height < 0 || rainAst.y > 480) {
+            // Verificar si el asteroide ha salido completamente de la pantalla
+            if ((speedX > 0 && rainAst.x > 800) || (speedX < 0 && rainAst.x + rainAst.width < 0) ||
+                    (speedY > 0 && rainAst.y > 480) || (speedY < 0 && rainAst.y + rainAst.height < 0)) {
                 iter.remove(); // Eliminar asteroides que han salido completamente de la pantalla
             }
+
 
             if (rainAst.overlaps(nave)) {
                 // Manejar colisión con la nave
