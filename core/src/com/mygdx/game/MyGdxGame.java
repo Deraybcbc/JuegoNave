@@ -278,7 +278,7 @@ public class MyGdxGame implements Screen {
                 // Verificar si se agotaron las vidas
                 if (contadorVidas <= 0) {
                     // Implementar lógica para cuando se quedan sin vidas
-                    game.setScreen(new GameOverScreen(game)); // Por ejemplo, cambiar a una pantalla de Game Over
+                    //game.setScreen(new GameOverScreen(game)); // Por ejemplo, cambiar a una pantalla de Game Over
                 }
             }
 
