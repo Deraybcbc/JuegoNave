@@ -1,6 +1,5 @@
 package com.mygdx.game;
 
-import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -9,16 +8,17 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+
+import helpers.AssetManager;
+import screens.GameOverScreen;
 
 public class MyGdxGame implements Screen {
     SpriteBatch batch;
@@ -41,7 +41,7 @@ public class MyGdxGame implements Screen {
     private long lastDropTime;
 
     int contador;
-    int contadorVidas = 3;
+    int contadorVidas;
 
     private boolean isStarCollected = true; // Variable que indica si se ha recogido la estrella actual
 
@@ -53,23 +53,8 @@ public class MyGdxGame implements Screen {
     public MyGdxGame(Drop game) {
         this.game = game;
 
-        //Cargar la nave y el asteroide
-        dropNave = new Texture(Gdx.files.internal("nave.png"));
-        dropAsteroide = new Texture(Gdx.files.internal("asteroide.png"));
-        dropPoints = new Texture(Gdx.files.internal("estrella.png"));
+        AssetManager.musicambient.play();
 
-
-        //Cargar sonido del juego
-        //Sonido Ambiente
-        musicambient = Gdx.audio.newMusic(Gdx.files.internal("Ambiente.mp3"));
-        //Puntos
-        Soundpoints = Gdx.audio.newSound(Gdx.files.internal("Puntos.mp3"));
-        //Choque
-        Soundexplosion = Gdx.audio.newSound(Gdx.files.internal("choques.mp3"));
-
-        //Poner la musica de ambiente a sonar inmediatamente
-        musicambient.setLooping(true);
-        musicambient.play();
 
         //crear la camara
         camera = new OrthographicCamera();
@@ -81,6 +66,8 @@ public class MyGdxGame implements Screen {
         nave.y = 20;
         nave.width = 64;
         nave.height = 64;
+
+        contadorVidas = 3;
 
         //Crear lluvia de asteorides en un array
         rainAsteroides = new ArrayList<Rectangle>();
@@ -176,7 +163,7 @@ public class MyGdxGame implements Screen {
 
         //Imprimir en pantalla los puntos que va obteniendo
         game.getBitmapFont().draw(game.getSpriteBatch(), "Puntos: " + contador, 0, 470);
-        game.getBitmapFont().draw(game.getSpriteBatch(), "Vidas: " + contadorVidas, 0, 470);
+        game.getBitmapFont().draw(game.getSpriteBatch(), "Vidas: " + contadorVidas, 0, 450);
 
 
         //Imprimir la nave
@@ -259,6 +246,12 @@ public class MyGdxGame implements Screen {
                 Soundexplosion.play();
                 System.out.println("COLISION");
                 iter.remove();
+
+                // Verificar si se agotaron las vidas
+                if (contadorVidas <= 0) {
+                    // Implementar lógica para cuando se quedan sin vidas
+                    game.setScreen(new GameOverScreen(game)); // Por ejemplo, cambiar a una pantalla de Game Over
+                }
             }
         }
 
@@ -275,11 +268,7 @@ public class MyGdxGame implements Screen {
                 iter.remove();
                 isStarCollected = true; // Establecer isStarCollected en true cuando la estrella desaparezca
 
-                // Verificar si se agotaron las vidas
-                if (contadorVidas <= 0) {
-                    // Implementar lógica para cuando se quedan sin vidas
-                    //game.setScreen(new GameOverScreen(game)); // Por ejemplo, cambiar a una pantalla de Game Over
-                }
+
             }
 
         }
