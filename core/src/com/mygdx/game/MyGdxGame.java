@@ -7,6 +7,7 @@ import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import helpers.AssetManager;
+import objects.Background;
 import screens.GameOverScreen;
 
 public class MyGdxGame implements Screen {
@@ -48,12 +50,22 @@ public class MyGdxGame implements Screen {
     private float spawnInterval = 0.35f; // Intervalo de tiempo entre la generación de asteroides en segundos
     private float timeSinceLastSpawn = 0;
 
+    private Background background;
+
     float speedY, speedX;
+
+    private GlyphLayout textLayout;
+
 
     public MyGdxGame(Drop game) {
         this.game = game;
 
+        AssetManager.load();
+
         AssetManager.musicambient.play();
+
+
+        background =  new Background(0,0,800,480,1.0f);
 
 
         //crear la camara
@@ -75,6 +87,8 @@ public class MyGdxGame implements Screen {
 
         spawnRainAsteroides();
         spawnPoints();
+        background = new Background(0, 0, 800, 480, 1.0f);
+
 
     }
 
@@ -147,10 +161,12 @@ public class MyGdxGame implements Screen {
 
     @Override
     public void render(float delta) {
+/*
         //Poner la pantalla de color azul oscuro
-        ScreenUtils.clear(0, 0, 0.2f, 1);
+        ScreenUtils.clear(0, 0, 0.2f, 1);*/
 
-        //Actulizar camara
+
+        //Actualizar camara
         camera.update();
 
         // le decimos al SpriteBatch que renderice en el
@@ -161,21 +177,24 @@ public class MyGdxGame implements Screen {
         // todos los asteroides
         game.getSpriteBatch().begin();
 
+        game.getSpriteBatch().draw(AssetManager.fondo, 0, 0, 800, 480);
+
+
         //Imprimir en pantalla los puntos que va obteniendo
         game.getBitmapFont().draw(game.getSpriteBatch(), "Puntos: " + contador, 0, 470);
         game.getBitmapFont().draw(game.getSpriteBatch(), "Vidas: " + contadorVidas, 0, 450);
 
 
         //Imprimir la nave
-        game.getSpriteBatch().draw(dropNave, nave.x, nave.y, nave.width, nave.height);
+        game.getSpriteBatch().draw(AssetManager.dropNave, nave.x, nave.y, nave.width, nave.height);
 
         //Imprimir los asteroides
         for (Rectangle rain : rainAsteroides) {
-            game.getSpriteBatch().draw(dropAsteroide, rain.x, rain.y, rain.width, rain.height);
+            game.getSpriteBatch().draw(AssetManager.dropAsteroide, rain.x, rain.y, rain.width, rain.height);
         }
 
         for (Rectangle rainP : rainPoints) {
-            game.getSpriteBatch().draw(dropPoints, rainP.x, rainP.y, rainP.width, rainP.height);
+            game.getSpriteBatch().draw(AssetManager.dropPoints, rainP.x, rainP.y, rainP.width, rainP.height);
         }
         game.getSpriteBatch().end();
 
@@ -243,13 +262,16 @@ public class MyGdxGame implements Screen {
             if (rainAst.overlaps(nave)) {
                 // Manejar colisión con la nave
                 contadorVidas--;
-                Soundexplosion.play();
+                AssetManager.Soundexplosion.play();
                 System.out.println("COLISION");
                 iter.remove();
 
                 // Verificar si se agotaron las vidas
                 if (contadorVidas <= 0) {
                     // Implementar lógica para cuando se quedan sin vidas
+                    AssetManager.muerte.play();
+                    AssetManager.musicambient.stop();
+                    AssetManager.Soundexplosion.stop();
                     game.setScreen(new GameOverScreen(game)); // Por ejemplo, cambiar a una pantalla de Game Over
                 }
             }
@@ -263,11 +285,10 @@ public class MyGdxGame implements Screen {
             }
             if (rainP.overlaps(nave)) {
                 contador++;
-                Soundpoints.play();
+                AssetManager.Soundpoints.play();
                 System.out.println("OBTENIDO");
                 iter.remove();
                 isStarCollected = true; // Establecer isStarCollected en true cuando la estrella desaparezca
-
 
             }
 

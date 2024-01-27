@@ -5,9 +5,13 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.mygdx.game.Drop;
 import com.mygdx.game.MyGdxGame;
+
+import helpers.AssetManager;
+import utils.Settings;
 
 public class GameOverScreen implements Screen {
 
@@ -19,12 +23,17 @@ public class GameOverScreen implements Screen {
     private float timeSinceTouch = 0f;
     private final float touchCooldown = 1.5f;
 
+    private GlyphLayout textLayout;
+
     public GameOverScreen(Drop game) {
         this.game = game;
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 800, 480);
         batch = new SpriteBatch();
         font = new BitmapFont();
+
+        textLayout = new GlyphLayout();
+        textLayout.setText(AssetManager.font, "GameOver");
     }
 
     @Override
